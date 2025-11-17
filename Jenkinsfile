@@ -7,7 +7,7 @@ pipeline {
     }
 
     stages {
-        
+
         stage('Clone Code') {
             steps {
                 git branch: 'master',
@@ -50,6 +50,40 @@ pipeline {
                 sh """
                 docker rmi ${IMAGE}:${BUILD_NUMBER} || true
                 """
+            }
+        }
+
+        stage('Update GitOps Repo') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'github-creds',
+                usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+
+                    sh """
+                        # Install yq if not present
+                        if ! command -v yq &> /dev/null; then
+                            echo "Installing yq..."
+                            sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+                            sudo chmod +x /usr/bin/yq
+                        fi
+
+                        # Clone GitOps repo
+                        rm -rf maven-webapp-gitops
+                        git clone https://${GIT_USER}:${GIT_PASS}@github.com/hareesh88666/maven-webapp-gitops.git
+
+                        cd maven-webapp-gitops
+
+                        # Update tag
+                        yq eval '.images[0].newTag = "${BUILD_NUMBER}"' -i kustomization.yaml
+
+                        # Commit changes
+                        git config --global user.email "jenkins@ci.com"
+                        git config --global user.name "Jenkins"
+
+                        git add .
+                        git commit -m "Auto update image tag to ${BUILD_NUMBER}"
+                        git push https://${GIT_USER}:${GIT_PASS}@github.com/hareesh88666/maven-webapp-gitops.git
+                    """
+                }
             }
         }
     }
