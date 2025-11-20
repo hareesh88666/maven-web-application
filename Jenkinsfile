@@ -70,17 +70,28 @@ pipeline {
                         rm -rf maven-webapp-gitops
                         git clone https://${GIT_USER}:${GIT_PASS}@github.com/hareesh88666/maven-webapp-gitops.git
 
-                        cd maven-webapp-gitops
+                        cd maven-webapp-gitops/maven-webapp
 
-                        # Update tag
-                        yq eval '.images[0].newTag = "${BUILD_NUMBER}"' -i kustomization.yaml
+                        echo "Detecting active version..."
+
+                        ACTIVE=\$(yq eval '.activeVersion' values-blue.yaml 2>/dev/null || echo "")
+
+                        if [ "\$ACTIVE" = "blue" ]; then
+                            echo "BLUE is active → updating values-blue.yaml"
+                            yq eval ".image.tag = \\"${BUILD_NUMBER}\\"" -i values-blue.yaml
+                        else
+                            echo "GREEN is active → updating values-green.yaml"
+                            yq eval ".image.tag = \\"${BUILD_NUMBER}\\"" -i values-green.yaml
+                        fi
+
+                        cd ..
 
                         # Commit changes
                         git config --global user.email "jenkins@ci.com"
                         git config --global user.name "Jenkins"
 
                         git add .
-                        git commit -m "Auto update image tag to ${BUILD_NUMBER}"
+                        git commit -m "Auto update image tag to ${BUILD_NUMBER}" || echo "No changes to commit"
                         git push https://${GIT_USER}:${GIT_PASS}@github.com/hareesh88666/maven-webapp-gitops.git
                     """
                 }
