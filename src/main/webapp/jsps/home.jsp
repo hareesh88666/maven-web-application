@@ -10,9 +10,9 @@
 
 <body>
 
-<!-- ===================== BLUE VERSION INDICATOR ===================== -->
-<h1 align="center" style="color:blue; font-size:48px;">
-    BLUE VERSION ACTIVE
+<!-- ===================== GREEN VERSION INDICATOR ===================== -->
+<h1 align="center" style="color:green; font-size:48px;">
+    GREEN VERSION ACTIVE
 </h1>
 <!-- ================================================================== -->
 
@@ -56,10 +56,6 @@
         **************************************************
     </span>
 </div>
-
-<hr>
-
-<p>Service : <a href="services/employee/getEmployeeDetails">Get Employee Details</a></p>
 
 <hr><hr>
 
